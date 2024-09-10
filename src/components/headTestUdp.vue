@@ -8,10 +8,10 @@
       <div class="collapse navbar-collapse" id="navbarNav">
         <ul class="navbar-nav ms-md-auto gap-2">
           <li class="nav-item rounded">
-            <a class="nav-link active" aria-current="page" href="#"><i class="bi bi-house-fill me-2"></i>Test UDP</a>
+            <a class="nav-link active" aria-current="page" href="/"  target="_blank"><i class="bi bi-house-fill me-2"></i>Test UDP</a>
           </li>
           <li class="nav-item rounded">
-            <a class="nav-link" href="#"><i class="bi bi-people-fill me-2"></i>Lịch sử</a>
+            <a class="nav-link active" href="/lichsughinhan" target="_blank"><i class="bi bi-people-fill me-2"></i>Lịch sử</a>
           </li>
 
         </ul>
