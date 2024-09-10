@@ -13,36 +13,30 @@ app.use(bodyParser.json());
 let messages = [];
 let acceptedIps = [];
 
-// API để lấy dữ liệu messages
 app.get("/api/messages", (req, res) => {
   res.json(messages);
 });
 
-// API để lưu dữ liệu messages
 app.post("/api/messages", (req, res) => {
   messages.push(req.body);
   res.status(201).send();
 });
 
-// API để lấy danh sách các IP đã chấp nhận
 app.get("/api/accepted-ips", (req, res) => {
   res.json(acceptedIps);
 });
 
-// API để lưu IP đã chấp nhận
 app.post("/api/accepted-ips", (req, res) => {
   acceptedIps.push(req.body.ip);
   res.status(201).send();
 });
 
-// Khởi tạo WebSocket server trên port 8081
 const wss = new WebSocket.Server({ port: 8081 });
 
 wss.on('connection', (ws) => {
   console.log('WebSocket client connected');
 });
 
-// Khởi tạo UDP server để nhận dữ liệu từ Hercules
 const udpServer = dgram.createSocket("udp4");
 
 udpServer.on("message", (msg, rinfo) => {
