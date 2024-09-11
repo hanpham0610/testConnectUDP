@@ -25,8 +25,15 @@
           </table>
 
           <!-- Nút Lưu Dữ Liệu -->
-          <button @click="saveData">Lưu dữ liệu</button>
-
+          <!-- <button @click="saveData">Lưu dữ liệu</button> -->
+          <button class="button" @click="saveData">
+    <div class="bg-container">
+      <div class="bg-circle"></div>
+    </div>
+    <div class="front">
+      <span>Lưu dữ liệu</span>
+    </div>
+</button>
           <!-- Popup thông báo -->
           <div
             v-if="showNotification"
@@ -130,7 +137,6 @@ export default defineComponent({
       },
       chartOptions: {
         responsive: true,
-        maintainAspectRatio: false,
         scales: {
           x: { title: { display: true, text: "Points" } },
           y: { title: { display: true, text: "Value" }, min: 0, max: 100 },
@@ -283,4 +289,5 @@ export default defineComponent({
   border-color: red;
   color: red;
 }
+
 </style>
