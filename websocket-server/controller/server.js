@@ -21,7 +21,10 @@ app.post("/api/messages", (req, res) => {
   messages.push(req.body);
   res.status(201).send();
 });
-
+app.delete("/api/messages", (req, res) => {
+  messages = []; // Xóa toàn bộ dữ liệu trong messages
+  res.status(200).send({ message: "Dữ liệu đã được xóa thành công." });
+});
 app.get("/api/accepted-ips", (req, res) => {
   res.json(acceptedIps);
 });

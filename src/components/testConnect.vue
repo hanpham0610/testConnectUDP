@@ -130,6 +130,7 @@ export default defineComponent({
       },
       chartOptions: {
         responsive: true,
+        maintainAspectRatio: false,
         scales: {
           x: { title: { display: true, text: "Points" } },
           y: { title: { display: true, text: "Value" }, min: 0, max: 100 },
@@ -138,6 +139,7 @@ export default defineComponent({
       showNotification: false,
       notificationMessage: "",
       notificationType: "",
+      ip : 'http://192.168.9.251:3000',
     };
   },
   mounted() {
@@ -159,11 +161,12 @@ export default defineComponent({
       };
     });
   },
+  
   methods: {
+
     async fetchMessages() {
       try {
-        const response = await axios.get(
-          "http://192.168.9.251:3000/api/messages"
+        const response = await axios.get(this.ip+"/api/messages"
         );
         this.messages = response.data;
         this.updateChartFromMessages();
@@ -200,12 +203,12 @@ export default defineComponent({
       try {
         const timestamp = Date.now(); // Tạo ID duy nhất bằng timestamp
         const newMessagesRef = ref(database, `messages/${timestamp}`); // Lưu dữ liệu với ID duy nhất
-
         await set(newMessagesRef, this.messages);
-
+        await axios.delete(this.ip+"/api/messages");
         this.showNotification = true;
         this.notificationMessage = "Dữ liệu đã được lưu thành công!";
         this.notificationType = "success";
+        window.location.reload()
       } catch (error) {
         console.error("Lỗi khi lưu dữ liệu:", error.message);
 
