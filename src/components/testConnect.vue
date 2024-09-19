@@ -145,7 +145,7 @@ export default defineComponent({
       showNotification: false,
       notificationMessage: "",
       notificationType: "",
-      ip: "http://192.168.9.251:3000",
+      ip: "http://14.225.207.221:3000",
     };
   },
   mounted() {
