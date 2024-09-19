@@ -1,10 +1,15 @@
 import HistoryUDP from "@/components/historyUDP.vue";
 import testConnect from "@/components/testConnect.vue";
+import loginVue from "@/components/loginVue.vue";
 import { createRouter, createWebHistory } from 'vue-router'
 const routes = [
-   
+  {
+    path: "/",
+    name: "login",
+    component: loginVue,
+  },
     {
-      path: "/",
+      path: "/home",
       name: "home",
       component: testConnect,
     },

@@ -1,13 +1,14 @@
 <template>
   <head-test-udp> </head-test-udp>
 
-  <div class="container-fluid">
-    <div class="row">
-      <div class="col-12 col-md-3">
-        <div >
+  <div class="container-fluid mt-2 p-5">
+    <div class="row d-flex justify-content-center">
+      <div class="col-12 col-md-3" style="background: white;
+    border-radius: 10px;">
+        <div>
           <table class="table table-striped table-hover">
             <thead>
-              <tr>
+              <tr style="font-size: 13px;">
                 <th><strong>Stt</strong></th>
                 <th><strong>IP</strong></th>
                 <th><strong>Data</strong></th>
@@ -27,14 +28,13 @@
           <!-- Nút Lưu Dữ Liệu -->
           <!-- <button @click="saveData">Lưu dữ liệu</button> -->
           <button class="button" @click="saveData">
-    <div class="bg-container">
-      <div class="bg-circle"></div>
-    </div>
-    <div class="front">
-      <span>Lưu dữ liệu</span>
-    </div>
-</button>
-          <!-- Popup thông báo -->
+            <div class="bg-container">
+              <div class="bg-circle"></div>
+            </div>
+            <div class="front">
+              <span>Lưu dữ liệu</span>
+            </div>
+          </button>
           <div
             v-if="showNotification"
             class="notification"
@@ -45,7 +45,8 @@
           </div>
         </div>
       </div>
-      <div class="col-12 col-md-9">
+      <div class="col-12 col-md-8 ms-lg-3" style="background: white;
+    border-radius: 10px;">
         <line-chart
           ref="lineChart"
           :data="chartData"
@@ -54,7 +55,6 @@
       </div>
     </div>
 
-    <!-- Popup confirmation dialog -->
     <div v-if="showPopup" class="popup">
       <p>Bạn có muốn nhận dữ liệu từ IP {{ currentIp }}?</p>
       <button @click="acceptData">Đồng ý</button>
@@ -78,7 +78,7 @@ import {
 } from "chart.js";
 import axios from "axios";
 import { database, ref, set } from "@/js/firebaseConfig";
-import headTestUdp from '@/components/headTestUdp.vue';
+import headTestUdp from "@/components/headTestUdp.vue";
 ChartJS.register(
   Title,
   Tooltip,
@@ -92,7 +92,7 @@ ChartJS.register(
 export default defineComponent({
   components: {
     LineChart: Line,
-   headTestUdp
+    headTestUdp,
   },
   data() {
     return {
@@ -145,10 +145,12 @@ export default defineComponent({
       showNotification: false,
       notificationMessage: "",
       notificationType: "",
-      ip : 'http://192.168.9.251:3000',
+      ip: "http://192.168.9.251:3000",
     };
   },
   mounted() {
+
+  
     this.fetchMessages();
     this.$nextTick(() => {
       this.chart = this.$refs.lineChart.chart;
@@ -156,24 +158,29 @@ export default defineComponent({
       const ws = new WebSocket("ws://localhost:8081");
       ws.onmessage = (event) => {
         const data = JSON.parse(event.data);
+        console.log("Received data:", data);
+
         if (!this.acceptedIps.includes(data.ip)) {
           this.currentIp = data.ip;
           this.pendingData = data;
           this.showPopup = true;
         } else {
           this.messages.push(data);
-          this.updateChart(data.message);
+          this.$nextTick(() => {
+            if (this.chart) {
+              this.updateChart(data.message);
+            }
+          });
         }
       };
     });
   },
-  
-  methods: {
 
+  methods: {
+    
     async fetchMessages() {
       try {
-        const response = await axios.get(this.ip+"/api/messages"
-        );
+        const response = await axios.get(this.ip + "/api/messages");
         this.messages = response.data;
         this.updateChartFromMessages();
       } catch (error) {
@@ -207,14 +214,17 @@ export default defineComponent({
     },
     async saveData() {
       try {
-        const timestamp = Date.now(); // Tạo ID duy nhất bằng timestamp
-        const newMessagesRef = ref(database, `messages/${timestamp}`); // Lưu dữ liệu với ID duy nhất
+        var user = localStorage.getItem("user");
+        user = JSON.parse(user);
+        console.log('user ', user.user);
+        const timestamp = Date.now();
+        const newMessagesRef = ref(database, `messages/${user.user+"_"+ timestamp}`);
         await set(newMessagesRef, this.messages);
-        await axios.delete(this.ip+"/api/messages");
+        await axios.delete(this.ip + "/api/messages");
         this.showNotification = true;
         this.notificationMessage = "Dữ liệu đã được lưu thành công!";
         this.notificationType = "success";
-        window.location.reload()
+        // window.location.reload();
       } catch (error) {
         console.error("Lỗi khi lưu dữ liệu:", error.message);
 
@@ -225,10 +235,28 @@ export default defineComponent({
     },
 
     acceptData() {
-      this.acceptedIps.push(this.currentIp);
-      this.messages.push(this.pendingData);
-      this.updateChart(this.pendingData.message);
-      this.clearPopup();
+      console.log("Pending data before accept:", this.pendingData);
+
+      fetch(this.ip + "/api/messages", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(this.pendingData),
+      })
+        .then((response) => {
+          if (response.ok) {
+            this.acceptedIps.push(this.currentIp);
+            this.messages.push(this.pendingData);
+            this.updateChart(this.pendingData.message);
+            this.clearPopup();
+          } else {
+            console.error("Failed to save data");
+          }
+        })
+        .catch((error) => {
+          console.error("Error saving data:", error);
+        });
     },
     rejectData() {
       this.clearPopup();
@@ -289,5 +317,4 @@ export default defineComponent({
   border-color: red;
   color: red;
 }
-
 </style>

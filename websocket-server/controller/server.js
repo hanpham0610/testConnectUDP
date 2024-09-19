@@ -2,7 +2,7 @@ const express = require("express");
 const bodyParser = require("body-parser");
 const cors = require("cors");
 const dgram = require("dgram");
-const WebSocket = require("ws"); // Import WebSocket
+const WebSocket = require("ws"); 
 
 const app = express();
 const port = 3000;
@@ -22,7 +22,7 @@ app.post("/api/messages", (req, res) => {
   res.status(201).send();
 });
 app.delete("/api/messages", (req, res) => {
-  messages = []; // Xóa toàn bộ dữ liệu trong messages
+  messages = []; 
   res.status(200).send({ message: "Dữ liệu đã được xóa thành công." });
 });
 app.get("/api/accepted-ips", (req, res) => {
@@ -55,10 +55,6 @@ udpServer.on("message", (msg, rinfo) => {
     timestamp: timestamp,
   };
 
-  // Lưu dữ liệu vào messages
-  messages.push(data);
-
-  // Gửi dữ liệu mới đến tất cả các client kết nối qua WebSocket
   wss.clients.forEach((client) => {
     if (client.readyState === WebSocket.OPEN) {
       client.send(JSON.stringify(data));
@@ -70,7 +66,6 @@ udpServer.bind(8080, () => {
   console.log("UDP Server listening on port 8080");
 });
 
-// Khởi động Express server
 app.listen(port, "0.0.0.0", () => {
   console.log(`Server is running on http://0.0.0.0:${port}`);
 });

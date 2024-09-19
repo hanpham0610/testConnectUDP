@@ -6,7 +6,7 @@
         Danh sách đã lưu
         <select v-model="selectedKey" @change="selectKey(selectedKey)">
           <option v-for="(key, index) in keys" :key="index" :value="key">
-            {{ formatTime(key) }}
+            {{ formatTime(key.split('_')[1]) }}
           </option>
         </select>
         <button v-if="selectedKey" @click="exportToExcel">
@@ -148,13 +148,20 @@ export default {
       return `${day}-${month}-${year} ${hours}:${minutes}:${seconds}`;
     },
     fetchMessages() {
+      var user = localStorage.getItem("user");
+      user = JSON.parse(user);
       const messagesRef = dbRef(database, "messages");
+
       onValue(
         messagesRef,
         (snapshot) => {
           const data = snapshot.val();
+          console.log('data ',data);
+          
           if (data) {
-            this.keys = Object.keys(data);
+            this.keys = Object.keys(data).filter(key => key.startsWith(user.user));
+         
+            
           }
         },
         { onlyOnce: true }
