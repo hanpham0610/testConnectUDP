@@ -155,7 +155,7 @@ export default defineComponent({
     this.$nextTick(() => {
       this.chart = this.$refs.lineChart.chart;
 
-      const ws = new WebSocket("ws://localhost:8081");
+      const ws = new WebSocket("ws://14.225.207.221:8081");
       ws.onmessage = (event) => {
         const data = JSON.parse(event.data);
         console.log("Received data:", data);
