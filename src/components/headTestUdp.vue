@@ -35,6 +35,8 @@
 </template>
 
 <script>
+import { domainIP } from '@/js/apiVue';
+
 export default {
   data() {
     return {
@@ -43,15 +45,34 @@ export default {
   },
   mounted() {
     const storedUser = localStorage.getItem("user");
+    
     const parsedUser = JSON.parse(storedUser);
     this.user = parsedUser.user;
     this.userAvatar = this.user.charAt(0).toUpperCase();
   },
   methods: {
-    logout() {
-     
-      localStorage.removeItem("user");
-      window.location.href = "/";
+    async logout() {
+      try {
+        const response = await fetch('http://'+domainIP+':3000/api/logout', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            user: this.user,
+          }),
+        });
+
+        if (response.ok) {
+          console.log('Đăng xuất thành công');
+          localStorage.removeItem("user")
+          this.$router.push('/'); 
+        } else {
+          console.error('Lỗi khi đăng xuất');
+        }
+      } catch (error) {
+        console.error('Lỗi khi gọi API đăng xuất:', error);
+      }
     },
   
   }
@@ -99,7 +120,7 @@ h1 {
 .dropdown {
   display: none;
   position: absolute;
-  top: 50px; /* Adjust depending on the height of your header */
+  top: 40px; /* Adjust depending on the height of your header */
   right: 0;
   background-color: white;
   border: 1px solid #ddd;

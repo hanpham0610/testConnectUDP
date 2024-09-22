@@ -79,6 +79,7 @@ import {
 import axios from "axios";
 import { database, ref, set } from "@/js/firebaseConfig";
 import headTestUdp from "@/components/headTestUdp.vue";
+import { domainIP } from "@/js/apiVue";
 ChartJS.register(
   Title,
   Tooltip,
@@ -145,7 +146,7 @@ export default defineComponent({
       showNotification: false,
       notificationMessage: "",
       notificationType: "",
-      ip: "http://14.225.207.221:3000",
+      ip: 'http://'+domainIP+':3000',
     };
   },
   mounted() {
@@ -155,7 +156,7 @@ export default defineComponent({
     this.$nextTick(() => {
       this.chart = this.$refs.lineChart.chart;
 
-      const ws = new WebSocket("ws://14.225.207.221:8081");
+      const ws = new WebSocket('ws://'+domainIP+':8081');
       ws.onmessage = (event) => {
         const data = JSON.parse(event.data);
         console.log("Received data:", data);
