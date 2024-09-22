@@ -62,22 +62,17 @@ app.post("/api/login", (req, res) => {
     return res.status(401).send({ message: "Thông tin đăng nhập không chính xác" });
   }
 
-  // Thử lấy IP từ nhiều nguồn khác nhau
-  const userIp = req.headers['x-forwarded-for'] || req.connection.remoteAddress || req.socket.remoteAddress;
+  // Lấy địa chỉ IP thực của người dùng
+  const userIp = req.headers['x-forwarded-for'] || req.connection.remoteAddress;
 
-  // Kiểm tra xem có header 'x-forwarded-for' không và lấy địa chỉ IP đầu tiên trong chuỗi
-  const forwardedIps = req.headers['x-forwarded-for'] ? req.headers['x-forwarded-for'].split(',') : [];
-  const ip = forwardedIps.length > 0 ? forwardedIps[0].trim() : userIp;
-
-  console.log(`IP thực tế của người dùng khi đăng nhập: ${ip}`);
-
-  // Đảm bảo người dùng chỉ có thể chấp nhận dữ liệu từ một IP
-  if (loggedInUsers[user] && loggedInUsers[user] !== ip) {
+  // Kiểm tra xem người dùng đã đăng nhập từ một IP khác chưa
+  if (loggedInUsers[user] && loggedInUsers[user].ip !== userIp) {
     return res.status(403).send({ message: "Người dùng đã đăng nhập từ một IP khác" });
   }
 
-  loggedInUsers[user] = ip; // Lưu trữ IP được chấp nhận của người dùng
-  console.log(`Đăng nhập thành công từ IP: ${ip}`);
+  // Lưu lại thông tin người dùng và địa chỉ IP đã đăng nhập
+  loggedInUsers[user] = { ip: userIp, user };
+  console.log(`Người dùng ${user} đã đăng nhập từ IP: ${userIp}`);
   res.status(200).send({ message: "Đăng nhập thành công", ip: userIp, user: userData.user });
 });
 app.post("/api/logout", (req, res) => {
@@ -96,8 +91,24 @@ app.post("/api/logout", (req, res) => {
 });
 const wss = new WebSocket.Server({ port: 8081 });
 
-wss.on('connection', (ws) => {
+wss.on('connection', (ws, req) => {
   console.log('WebSocket client connected');
+
+  // Lấy địa chỉ IP từ kết nối WebSocket
+  const ip = req.headers['x-forwarded-for'] || req.connection.remoteAddress;
+
+  // Tìm người dùng tương ứng với địa chỉ IP này
+  const user = Object.keys(loggedInUsers).find(
+    (user) => loggedInUsers[user].ip === ip
+  );
+
+  if (user) {
+    ws.user = user; // Gán tên người dùng cho WebSocket client
+    console.log(`WebSocket được liên kết với người dùng ${user}`);
+  } else {
+    console.log(`WebSocket kết nối từ IP không xác định: ${ip}`);
+    ws.close(); // Đóng kết nối nếu không tìm thấy người dùng
+  }
 });
 
 const udpServer = dgram.createSocket("udp4");
@@ -108,32 +119,35 @@ udpServer.on("message", (msg, rinfo) => {
     `Đã nhận: ${msg} từ ${rinfo.address}:${rinfo.port} vào lúc ${timestamp}`
   );
 
-  console.log(`Danh sách loggedInUsers:`, loggedInUsers);
-
+  // Tìm người dùng tương ứng với địa chỉ IP nhận được từ UDP
   const user = Object.keys(loggedInUsers).find(
-    (user) => loggedInUsers[user] === rinfo.address
+    (user) => loggedInUsers[user].ip === rinfo.address
   );
-
-  console.log(`User tìm thấy: ${user}`);
 
   if (!user) {
     console.log(`IP không được phép ${rinfo.address} đã cố gắng gửi dữ liệu.`);
     return; // Từ chối tin nhắn nếu IP không được phép
   }
 
+  console.log(`Dữ liệu được chấp nhận từ người dùng ${user}`);
+
+  // Liên kết dữ liệu với người dùng
   const data = {
+    user: user,
     message: msg.toString(),
     ip: rinfo.address,
     port: rinfo.port,
     timestamp: timestamp,
   };
 
+  // Gửi dữ liệu qua WebSocket cho đúng người dùng
   wss.clients.forEach((client) => {
-    if (client.readyState === WebSocket.OPEN) {
+    if (client.user === user && client.readyState === WebSocket.OPEN) {
       client.send(JSON.stringify(data));
     }
   });
 });
+
 
 
 
