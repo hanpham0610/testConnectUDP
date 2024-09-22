@@ -150,17 +150,20 @@ export default defineComponent({
     };
   },
   mounted() {
+  this.fetchMessages();
+  this.$nextTick(() => {
+    this.chart = this.$refs.lineChart.chart;
 
-  
-    this.fetchMessages();
-    this.$nextTick(() => {
-      this.chart = this.$refs.lineChart.chart;
+    const ws = new WebSocket('ws://' + domainIP + ':8081');
+    ws.onmessage = (event) => {
+      const data = JSON.parse(event.data);
+      console.log("Received data:", data);
 
-      const ws = new WebSocket('ws://'+domainIP+':8081');
-      ws.onmessage = (event) => {
-        const data = JSON.parse(event.data);
-        console.log("Received data:", data);
+      var localUser = localStorage.getItem("user");
+      localUser = JSON.parse(localUser);
 
+      // Kiểm tra nếu người dùng từ localStorage khớp với người dùng trong dữ liệu nhận được
+      if (data.user === localUser.user) {
         if (!this.acceptedIps.includes(data.ip)) {
           this.currentIp = data.ip;
           this.pendingData = data;
@@ -173,21 +176,27 @@ export default defineComponent({
             }
           });
         }
-      };
-    });
-  },
+      } else {
+        console.log("Người dùng không khớp, không hiển thị dữ liệu.");
+      }
+    };
+  });
+},
 
   methods: {
     
     async fetchMessages() {
-      try {
-        const response = await axios.get(this.ip + "/api/messages");
-        this.messages = response.data;
-        this.updateChartFromMessages();
-      } catch (error) {
-        console.error("Lỗi khi lấy dữ liệu:", error);
-      }
-    },
+  try {
+    const response = await axios.get(this.ip + "/api/messages");
+    var localUser = localStorage.getItem("user");
+    localUser = JSON.parse(localUser);
+    this.messages = response.data.filter((message) => message.user === localUser.user);
+    console.log(" this.messages ", this.messages);
+    this.updateChartFromMessages();
+  } catch (error) {
+    console.error("Lỗi khi lấy dữ liệu:", error);
+  }
+},
     updateChartFromMessages() {
       this.messages.forEach((data) => this.updateChart(data.message));
     },
@@ -236,29 +245,38 @@ export default defineComponent({
     },
 
     acceptData() {
-      console.log("Pending data before accept:", this.pendingData);
+  console.log("Dữ liệu chờ trước khi chấp nhận:", this.pendingData);
 
-      fetch(this.ip + "/api/messages", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(this.pendingData),
+  // Lấy thông tin user từ localStorage
+  var localUser = localStorage.getItem("user");
+  localUser = JSON.parse(localUser);
+
+  // Kiểm tra nếu user trong pendingData khớp với user trong localStorage
+  if (this.pendingData.user === localUser.user) {
+    fetch(this.ip + "/api/messages", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(this.pendingData),
+    })
+      .then((response) => {
+        if (response.ok) {
+          this.acceptedIps.push(this.currentIp); // Thêm IP hiện tại vào danh sách IP đã chấp nhận
+          this.messages.push(this.pendingData); // Đẩy dữ liệu chờ vào mảng messages
+          this.updateChart(this.pendingData.message); // Cập nhật biểu đồ với dữ liệu mới
+          this.clearPopup(); // Xóa popup yêu cầu chấp nhận
+        } else {
+          console.error("Không thể lưu dữ liệu");
+        }
       })
-        .then((response) => {
-          if (response.ok) {
-            this.acceptedIps.push(this.currentIp);
-            this.messages.push(this.pendingData);
-            this.updateChart(this.pendingData.message);
-            this.clearPopup();
-          } else {
-            console.error("Failed to save data");
-          }
-        })
-        .catch((error) => {
-          console.error("Error saving data:", error);
-        });
-    },
+      .catch((error) => {
+        console.error("Lỗi khi lưu dữ liệu:", error);
+      });
+  } else {
+    console.log("Người dùng không khớp, không gọi API.");
+  }
+},
     rejectData() {
       this.clearPopup();
     },

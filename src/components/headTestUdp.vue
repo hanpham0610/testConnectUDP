@@ -38,7 +38,7 @@
 import { domainIP } from '@/js/apiVue';
 
 export default {
-  data() {
+  data() { 
     return {
       user: "",
     };
