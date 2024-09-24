@@ -27,16 +27,7 @@
             </tbody>
           </table>
 
-          <!-- Nút Lưu Dữ Liệu -->
-          <!-- <button @click="saveData">Lưu dữ liệu</button> -->
-          <button class="button" @click="saveData" v-if="user && user.startsWith('userQuanLy')">
-  <div class="bg-container">
-    <div class="bg-circle"></div>
-  </div>
-  <div class="front">
-    <span>Lưu dữ liệu</span>
-  </div>
-</button>
+      
           <div
             v-if="showNotification"
             class="notification"
@@ -104,7 +95,6 @@ export default defineComponent({
   },
   data() {
     return {
-      user:'',
       messages: [],
       acceptedIps: [],
       showPopup: false,
@@ -156,10 +146,12 @@ export default defineComponent({
       notificationMessage: "",
       notificationType: "",
       ip: "http://" + domainIP + ":3000",
+      code:  this.$route.params.id,
     };
   },
   mounted() {
     this.fetchMessages();
+    
     this.$nextTick(() => {
       this.chart = this.$refs.lineChart.chart;
 
@@ -167,17 +159,7 @@ export default defineComponent({
       ws.onmessage = (event) => {
         const data = JSON.parse(event.data);
 
-        var localUser = localStorage.getItem("user");
-        localUser = JSON.parse(localUser);
-        // Kiểm tra nếu người dùng từ localStorage khớp với người dùng trong dữ liệu nhận được
-        if (data.mayGui === localUser.code) {
-          if (!this.acceptedIps.includes(data.ip)) {
-            this.currentIp = data.ip;
-            this.mayGui = data.mayGui;
-            this.user = data.user;
-            this.pendingData = data;
-            this.showPopup = true;
-          } else {
+        
             this.messages.push(data);
             this.$nextTick(() => {
               if (this.chart) {
@@ -185,10 +167,8 @@ export default defineComponent({
               }
             });
           }
-        } else {
-          console.log("Người dùng không khớp, không hiển thị dữ liệu.");
-        }
-      };
+      
+     
     });
   },
 
@@ -196,10 +176,9 @@ export default defineComponent({
     async fetchMessages() {
       try {
         const response = await axios.get(this.ip + "/api/messages");
-        var localUser = localStorage.getItem("user");
-        localUser = JSON.parse(localUser);
+    
         this.messages = response.data.filter(
-          (message) => message.mayGui === localUser.code
+          (message) => message.mayGui === this.code
         );
         console.log(" this.messages ", this.messages);
         this.updateChartFromMessages();
@@ -234,7 +213,7 @@ export default defineComponent({
     },
     async saveData() {
       try {
-        var user = localStorage.getItem("user");
+        var user = localStorage.getItem("userAdmin");
         user = JSON.parse(user);
         console.log("user ", user.user);
         const timestamp = Date.now();
@@ -261,7 +240,7 @@ export default defineComponent({
       console.log("Dữ liệu chờ trước khi chấp nhận:", this.pendingData);
 
       // Lấy thông tin user từ localStorage
-      var localUser = localStorage.getItem("user");
+      var localUser = localStorage.getItem("userAdmin");
       localUser = JSON.parse(localUser);
 
       // Kiểm tra nếu user trong pendingData khớp với user trong localStorage

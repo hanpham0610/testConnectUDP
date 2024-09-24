@@ -13,8 +13,10 @@
         </label>
         <div class="nav-container">
           <ul class="nav-tabs" style="font-size: 13px !important;">
-            <li class="nav-tab"><a href="/home" style="color: black;"> Home</a></li>
-            <li class="nav-tab"><a href="/lichsughinhan" style="color: black;">History UDP</a></li>
+            
+            <li class="nav-tab" v-if="user == 'admin'"><a href="/quanly/danhsachmay" style="color: black;"> Danh sách máy</a></li>
+            <li class="nav-tab" v-else><a href="/trangchu" style="color: black;"> Trang chủ</a></li>
+            <li class="nav-tab"><a href="/lichsughinhan" style="color: black;">Lưu trữ</a></li>
             <!-- <li class="d-flex align-items-center">
               <div class="avatar">{{ userAvatar }}</div>
               {{ user }}

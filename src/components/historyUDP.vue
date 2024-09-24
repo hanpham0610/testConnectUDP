@@ -2,23 +2,39 @@
   <div>
     <head-test-udp></head-test-udp>
     <div class="p-3">
-      <div>
-        Danh sách đã lưu
-        <select v-model="selectedKey" @change="selectKey(selectedKey)">
-          <option v-for="(key, index) in keys" :key="index" :value="key">
-            {{ formatTime(key.split('_')[1]) }}
-          </option>
-        </select>
-        <button v-if="selectedKey" @click="exportToExcel">
-          Tải Dữ Liệu Excel
-        </button>
+      <div
+        class="container-fluid p-3"
+       
+      >
+        <div class="row">
+          <div class="row d-flex justify-content-center">
+            <div class="col-12 col-md-3 ms-lg-3 p-3"    style="background: white; border-bottom-left-radius: 10px ;border-top-left-radius: 10px">
+              Danh sách đã lưu
+              <select v-model="selectedKey" @change="selectKey(selectedKey)">
+                <option v-for="(key, index) in keys" :key="index" :value="key">
+                  {{ key.split("_")[0]}} - 
+                  {{ formatTime(key.split("_")[1]) }}
+                </option>
+              </select>
+            </div>
+            <div
+              class="col-12 col-md-8 p-3"
+              style="background: white; border-bottom-right-radius: 10px ;border-top-right-radius: 10px"
+            >
+            <button @click="exportToExcel" style="background-color: green; color: white; border: none; height: 30px; border-radius: 10px;">Tải Dữ Liệu Excel</button>
+          </div>
+        </div>
+        </div>
       </div>
 
       <!-- Details of selected key -->
-      <div v-if="selectedKey">
-        <div class="container-fluid">
-          <div class="row">
-            <div class="col-12 col-md-3">
+      <div >
+        <div class="container-fluid mt-3">
+          <div class="row d-flex justify-content-center">
+            <div
+              class="col-12 col-md-3"
+              style="background: white; border-radius: 10px"
+            >
               <table class="table table-striped table-hover">
                 <thead>
                   <tr>
@@ -38,7 +54,10 @@
                 </tbody>
               </table>
             </div>
-            <div class="col-12 col-md-9">
+            <div
+              class="col-12 col-md-8 ms-lg-3"
+              style="background: white; border-radius: 10px"
+            >
               <line-chart
                 ref="lineChart"
                 :data="chartData"
@@ -104,21 +123,21 @@ export default {
             borderColor: "red",
             backgroundColor: "rgba(255, 0, 0, 0.2)",
             fill: false,
-            data: [], 
+            data: [],
           },
           {
             label: "Data 3",
             borderColor: "green",
             backgroundColor: "rgba(0, 255, 0, 0.2)",
             fill: false,
-            data: [], 
+            data: [],
           },
           {
             label: "Data 4",
             borderColor: "black",
             backgroundColor: "rgba(0, 0, 0, 0.2)",
             fill: false,
-            data: [], 
+            data: [],
           },
         ],
       },
@@ -129,7 +148,7 @@ export default {
           x: { title: { display: true, text: "Points" } },
           y: { title: { display: true, text: "Value" }, min: 0, max: 100 },
         },
-        beginAtZero: true,
+        // beginAtZero: true,
       },
     };
   },
@@ -148,25 +167,32 @@ export default {
       return `${day}-${month}-${year} ${hours}:${minutes}:${seconds}`;
     },
     fetchMessages() {
-      var user = localStorage.getItem("user");
-      user = JSON.parse(user);
-      const messagesRef = dbRef(database, "messages");
+  var user = localStorage.getItem("user");
+  user = JSON.parse(user);
+  const messagesRef = dbRef(database, "messages");
 
-      onValue(
-        messagesRef,
-        (snapshot) => {
-          const data = snapshot.val();
-          console.log('data ',data);
-          
-          if (data) {
-            this.keys = Object.keys(data).filter(key => key.startsWith(user.user));
-         
-            
-          }
-        },
-        { onlyOnce: true }
-      );
+  onValue(
+    messagesRef,
+    (snapshot) => {
+      const data = snapshot.val();
+      console.log("data ", data);
+
+      if (data) {
+        // Check if the user is admin
+        if (user.user === 'admin') {
+          // Show all keys if the user is admin
+          this.keys = Object.keys(data);
+        } else {
+          // Filter the keys based on the user's name
+          this.keys = Object.keys(data).filter((key) =>
+            key.startsWith(user.user)
+          );
+        }
+      }
     },
+    { onlyOnce: true }
+  );
+},
     selectKey(key) {
       if (!key) return;
       const messagesRef = dbRef(database, `messages/${key}`);
@@ -187,18 +213,16 @@ export default {
       const dataset3 = [];
       const dataset4 = [];
 
-
       this.messages.forEach((item, index) => {
         labels.push(index);
-        const values = item.message.split("-").map(Number); 
-        console.log("Values for index " + index, values); 
+        const values = item.message.split("-").map(Number);
+        console.log("Values for index " + index, values);
         dataset1.push(values[0] || 0); // Giá trị cho dataset 1
         dataset2.push(values[1] || 0); // Giá trị cho dataset 2
         dataset3.push(values[2] || 0); // Giá trị cho dataset 3
         dataset4.push(values[3] || 0); // Giá trị cho dataset 4
       });
 
-   
       const updatedChartData = {
         labels: labels,
         datasets: [
@@ -233,9 +257,7 @@ export default {
         ],
       };
 
-   
       this.chartData = updatedChartData;
-
 
       this.$nextTick(() => {
         const chartInstance = this.$refs.lineChart?.chart;
