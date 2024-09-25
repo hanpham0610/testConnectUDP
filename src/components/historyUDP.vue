@@ -35,29 +35,44 @@
               class="col-12 col-md-3"
               style="background: white; border-radius: 10px"
             >
-              <table class="table table-striped table-hover">
-                <thead>
-                  <tr>
-                    <th><strong>Stt</strong></th>
-                    <th><strong>IP</strong></th>
-                    <th><strong>Data</strong></th>
-                    <th><strong>Time</strong></th>
-                  </tr>
-                </thead>
-                <tbody>
-                  <tr v-for="(item, index) in messages" :key="index">
-                    <td>{{ index + 1 }}</td>
-                    <td>{{ item.ip }}</td>
-                    <td>{{ item.message }}</td>
-                    <td>{{ formattedTimestamp(item.timestamp) }}</td>
-                  </tr>
-                </tbody>
-              </table>
+            <table class="table table-striped table-hover">
+          <thead>
+            <tr style="font-size: 13px">
+              <th><strong>Stt</strong></th>
+              <th><strong>IP</strong></th>
+              <th><strong>Data</strong></th>
+              <th><strong>Time</strong></th>
+            </tr>
+          </thead>
+        </table>
+
+        <!-- Div bao quanh tbody để tạo scroll -->
+        <div style="height: 600px; overflow-y: auto">
+          <table class="table table-striped table-hover">
+            <tbody>
+              <tr v-for="(item, index) in messages" :key="index">
+                <td>{{ index + 1 }}</td>
+                <td>{{ item.ip }}</td>
+                <td>{{ item.message }}</td>
+                <td>{{ formattedTimestamp(item.timestamp) }}</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
             </div>
             <div
               class="col-12 col-md-8 ms-lg-3"
               style="background: white; border-radius: 10px"
             >
+            <div class="mb-3 w-25">
+          <label for="maxValue">Value:</label>
+          <input
+            id="maxValue"
+            type="number"
+            v-model="maxValue"
+            @input="updateYScale"
+          />
+        </div>
               <line-chart
                 ref="lineChart"
                 :data="chartData"
@@ -107,6 +122,7 @@ export default {
     return {
       keys: [],
       messages: [],
+      maxValue: 100,
       selectedKey: null,
       chartData: {
         labels: [],
@@ -143,7 +159,7 @@ export default {
       },
       chartOptions: {
         responsive: true,
-        maintainAspectRatio: false,
+        // maintainAspectRatio: false,
         scales: {
           x: { title: { display: true, text: "Points" } },
           y: { title: { display: true, text: "Value" }, min: 0, max: 100 },
@@ -156,6 +172,14 @@ export default {
     this.fetchMessages();
   },
   methods: {
+    updateYScale() {
+    // Truy cập đối tượng biểu đồ thông qua $refs và cập nhật trục y
+    const chartInstance = this.$refs.lineChart?.chart;
+    if (chartInstance) {
+      chartInstance.options.scales.y.max = this.maxValue; // Cập nhật max trên trục y
+      chartInstance.update(); // Làm mới biểu đồ
+    }
+  },
     formatTime(time) {
       const date = new Date(parseInt(time, 10));
       const year = date.getFullYear();

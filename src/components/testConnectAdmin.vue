@@ -7,16 +7,20 @@
         class="col-12 col-md-3"
         style="background: white; border-radius: 10px"
       >
-        <div>
+      <table class="table table-striped table-hover">
+          <thead>
+            <tr style="font-size: 13px">
+              <th><strong>Stt</strong></th>
+              <th><strong>IP</strong></th>
+              <th><strong>Data</strong></th>
+              <th><strong>Time</strong></th>
+            </tr>
+          </thead>
+        </table>
+
+        <!-- Div bao quanh tbody để tạo scroll -->
+        <div style="height: 600px; overflow-y: auto">
           <table class="table table-striped table-hover">
-            <thead>
-              <tr style="font-size: 13px">
-                <th><strong>Stt</strong></th>
-                <th><strong>IP</strong></th>
-                <th><strong>Data</strong></th>
-                <th><strong>Time</strong></th>
-              </tr>
-            </thead>
             <tbody>
               <tr v-for="(item, index) in messages" :key="index">
                 <td>{{ index + 1 }}</td>
@@ -26,6 +30,7 @@
               </tr>
             </tbody>
           </table>
+        </div>
 
       
           <div
@@ -37,11 +42,20 @@
             <button @click="hideNotification">Đóng</button>
           </div>
         </div>
-      </div>
+      
       <div
         class="col-12 col-md-8 ms-lg-3"
         style="background: white; border-radius: 10px"
       >
+      <div class="mb-3 w-25">
+          <label for="maxValue">Value:</label>
+          <input
+            id="maxValue"
+            type="number"
+            v-model="maxValue"
+            @input="updateYScale"
+          />
+        </div>
         <line-chart
           ref="lineChart"
           :data="chartData"
@@ -102,6 +116,8 @@ export default defineComponent({
       mayGui: "",
       pendingData: null,
       pointCounter: 0,
+      maxValue: 100,
+
       chartData: {
         labels: [],
         datasets: [
@@ -173,6 +189,13 @@ export default defineComponent({
   },
 
   methods: {
+    updateYScale() {
+      if (this.chart) {
+        this.chart.options.scales.y.max = this.maxValue;
+
+        this.chart.update();
+      }
+    },
     async fetchMessages() {
       try {
         const response = await axios.get(this.ip + "/api/messages");

@@ -7,16 +7,20 @@
         class="col-12 col-md-3"
         style="background: white; border-radius: 10px"
       >
-        <div>
+        <table class="table table-striped table-hover">
+          <thead>
+            <tr style="font-size: 13px">
+              <th><strong>Stt</strong></th>
+              <th><strong>IP</strong></th>
+              <th><strong>Data</strong></th>
+              <th><strong>Time</strong></th>
+            </tr>
+          </thead>
+        </table>
+
+        <!-- Div bao quanh tbody để tạo scroll -->
+        <div style="height: 600px; overflow-y: auto">
           <table class="table table-striped table-hover">
-            <thead>
-              <tr style="font-size: 13px">
-                <th><strong>Stt</strong></th>
-                <th><strong>IP</strong></th>
-                <th><strong>Data</strong></th>
-                <th><strong>Time</strong></th>
-              </tr>
-            </thead>
             <tbody>
               <tr v-for="(item, index) in messages" :key="index">
                 <td>{{ index + 1 }}</td>
@@ -26,31 +30,44 @@
               </tr>
             </tbody>
           </table>
+        </div>
 
-          <!-- Nút Lưu Dữ Liệu -->
-          <!-- <button @click="saveData">Lưu dữ liệu</button> -->
-          <button class="button" @click="saveData" v-if="user && user.startsWith('userQuanLy')">
-  <div class="bg-container">
-    <div class="bg-circle"></div>
-  </div>
-  <div class="front">
-    <span>Lưu dữ liệu</span>
-  </div>
-</button>
-          <div
-            v-if="showNotification"
-            class="notification"
-            :class="notificationType"
-          >
-            <p>{{ notificationMessage }}</p>
-            <button @click="hideNotification">Đóng</button>
-          </div>
+        <!-- Nút Lưu Dữ Liệu -->
+        <!-- <button @click="saveData">Lưu dữ liệu</button> -->
+        <div class="w-100 p-3">
+          <button class="rainbow-button" @click="saveData">
+            <!-- <div class="bg-container">
+              <div class="bg-circle"></div>
+            </div> -->
+            <div class="front">
+              <span>Lưu dữ liệu</span>
+            </div>
+          </button>
+        </div>
+        <div
+          v-if="showNotification"
+          class="notification"
+          :class="notificationType"
+        >
+          <p>{{ notificationMessage }}</p>
+          <button @click="hideNotification">Đóng</button>
         </div>
       </div>
+
       <div
         class="col-12 col-md-8 ms-lg-3"
         style="background: white; border-radius: 10px"
       >
+        <div class="mb-3 w-25">
+          <label for="maxValue">Value:</label>
+          <input
+            id="maxValue"
+            type="number"
+            v-model="maxValue"
+            @input="updateYScale"
+          />
+        </div>
+
         <line-chart
           ref="lineChart"
           :data="chartData"
@@ -104,12 +121,13 @@ export default defineComponent({
   },
   data() {
     return {
-      user:'',
+      user: "",
       messages: [],
       acceptedIps: [],
       showPopup: false,
       currentIp: "",
       mayGui: "",
+      maxValue: 100,
       pendingData: null,
       pointCounter: 0,
       chartData: {
@@ -159,39 +177,48 @@ export default defineComponent({
     };
   },
   mounted() {
-  this.fetchMessages();
-  this.$nextTick(() => {
-    this.chart = this.$refs.lineChart.chart;
+    this.fetchMessages();
+    this.$nextTick(() => {
+      this.chart = this.$refs.lineChart.chart;
 
-    const ws = new WebSocket("ws://" + domainIP + ":8081");
-    ws.onmessage = (event) => {
-      const data = JSON.parse(event.data);
+      const ws = new WebSocket("ws://" + domainIP + ":8081");
+      ws.onmessage = (event) => {
+        const data = JSON.parse(event.data);
 
-      var localUser = localStorage.getItem("user");
-      localUser = JSON.parse(localUser);
-      
-      // Kiểm tra nếu người dùng từ localStorage khớp với người dùng trong dữ liệu nhận được
-      if (data.mayGui === localUser.code) {
-        // Kiểm tra nếu IP đã được chấp nhận
-        if (this.acceptedIps.includes(data.ip)) {
-          // Tự động xử lý dữ liệu mà không cần popup
-          this.pendingData = data;
-          this.acceptData(); // Tự động gọi hàm acceptData
-        } else {
+        var localUser = localStorage.getItem("user");
+        localUser = JSON.parse(localUser);
+
+        // Kiểm tra nếu người dùng từ localStorage khớp với người dùng trong dữ liệu nhận được
+        if (data.mayGui === localUser.code) {
+          // Kiểm tra nếu IP đã được chấp nhận
+          // if (this.acceptedIps.includes(data.ip)) {
           this.currentIp = data.ip;
           this.mayGui = data.mayGui;
           this.user = data.user;
           this.pendingData = data;
-          this.showPopup = true; // Hiển thị popup lần đầu
+          this.acceptData(); // Tự động gọi hàm acceptData
+          // } else {
+          //   this.currentIp = data.ip;
+          //   this.mayGui = data.mayGui;
+          //   this.user = data.user;
+          //   this.pendingData = data;
+          //   this.showPopup = true; // Hiển thị popup lần đầu
+          // }
+        } else {
+          console.log("Người dùng không khớp, không hiển thị dữ liệu.");
         }
-      } else {
-        console.log("Người dùng không khớp, không hiển thị dữ liệu.");
-      }
-    };
-  });
-},
+      };
+    });
+  },
 
   methods: {
+    updateYScale() {
+      if (this.chart) {
+        this.chart.options.scales.y.max = this.maxValue;
+
+        this.chart.update();
+      }
+    },
     async fetchMessages() {
       try {
         const response = await axios.get(this.ip + "/api/messages");
@@ -246,7 +273,7 @@ export default defineComponent({
         this.showNotification = true;
         this.notificationMessage = "Dữ liệu đã được lưu thành công!";
         this.notificationType = "success";
-         window.location.reload();
+        window.location.reload();
       } catch (error) {
         console.error("Lỗi khi lưu dữ liệu:", error.message);
 
@@ -257,37 +284,37 @@ export default defineComponent({
     },
 
     acceptData() {
-    console.log("Dữ liệu chờ trước khi chấp nhận:", this.pendingData);
+      console.log("Dữ liệu chờ trước khi chấp nhận:", this.pendingData);
 
-    var localUser = localStorage.getItem("user");
-    localUser = JSON.parse(localUser);
+      var localUser = localStorage.getItem("user");
+      localUser = JSON.parse(localUser);
 
-    // Kiểm tra nếu user trong pendingData khớp với user trong localStorage
-    if (this.pendingData.mayGui === localUser.code) {
-      fetch(this.ip + "/api/messages", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(this.pendingData),
-      })
-        .then((response) => {
-          if (response.ok) {
-            this.acceptedIps.push(this.currentIp); // Thêm IP vào danh sách đã chấp nhận
-            this.messages.push(this.pendingData); // Lưu thông điệp mới
-            this.updateChart(this.pendingData.message); // Cập nhật biểu đồ
-            this.clearPopup(); // Ẩn popup nếu có
-          } else {
-            console.error("Không thể lưu dữ liệu");
-          }
+      // Kiểm tra nếu user trong pendingData khớp với user trong localStorage
+      if (this.pendingData.mayGui === localUser.code) {
+        fetch(this.ip + "/api/messages", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify(this.pendingData),
         })
-        .catch((error) => {
-          console.error("Lỗi khi lưu dữ liệu:", error);
-        });
-    } else {
-      console.log("Người dùng không khớp, không gọi API.");
-    }
-  },
+          .then((response) => {
+            if (response.ok) {
+              this.acceptedIps.push(this.currentIp); // Thêm IP vào danh sách đã chấp nhận
+              this.messages.push(this.pendingData); // Lưu thông điệp mới
+              this.updateChart(this.pendingData.message); // Cập nhật biểu đồ
+              this.clearPopup(); // Ẩn popup nếu có
+            } else {
+              console.error("Không thể lưu dữ liệu");
+            }
+          })
+          .catch((error) => {
+            console.error("Lỗi khi lưu dữ liệu:", error);
+          });
+      } else {
+        console.log("Người dùng không khớp, không gọi API.");
+      }
+    },
     rejectData() {
       this.clearPopup();
     },
@@ -312,6 +339,24 @@ export default defineComponent({
 </script>
 
 <style>
+.rainbow-button {
+  background-color: white; /* Màu nền nút */
+  padding: 10px 20px;
+  font-size: 16px;
+  font-weight: bold;
+  color: black; /* Màu chữ */
+  /* border: 5px solid; */
+  border: 10px solid linear-gradient(45deg, green, blue, indigo, violet) 1; /* Bo tròn các góc */
+  cursor: pointer;
+  transition: transform 0.3s ease;
+}
+
+.rainbow-button:hover {
+  transform: scale(1.1); /* Phóng to nút khi hover */
+}
+::-webkit-scrollbar {
+  width: 5px;
+}
 .popup {
   position: fixed;
   top: 20%;
