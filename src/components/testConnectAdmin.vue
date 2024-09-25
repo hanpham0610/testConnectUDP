@@ -109,7 +109,7 @@ export default defineComponent({
   },
   data() {
     return {
-      messages: [],
+      messages: [], 
       acceptedIps: [],
       showPopup: false,
       currentIp: "",

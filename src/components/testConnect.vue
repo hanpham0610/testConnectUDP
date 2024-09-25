@@ -34,11 +34,8 @@
 
         <!-- Nút Lưu Dữ Liệu -->
         <!-- <button @click="saveData">Lưu dữ liệu</button> -->
-        <div class="w-100 p-3">
+        <div class="w-100 p-3" v-if="user.startsWith('userQuanLy')">
           <button class="rainbow-button" @click="saveData">
-            <!-- <div class="bg-container">
-              <div class="bg-circle"></div>
-            </div> -->
             <div class="front">
               <span>Lưu dữ liệu</span>
             </div>
@@ -178,13 +175,16 @@ export default defineComponent({
   },
   mounted() {
     this.fetchMessages();
+    var localUser = localStorage.getItem("user");
+    localUser = JSON.parse(localUser);
+    console.log("localUser", localUser.user);
+    this.user = localUser.user;
     this.$nextTick(() => {
       this.chart = this.$refs.lineChart.chart;
 
       const ws = new WebSocket("ws://" + domainIP + ":8081");
       ws.onmessage = (event) => {
         const data = JSON.parse(event.data);
-
         var localUser = localStorage.getItem("user");
         localUser = JSON.parse(localUser);
 
@@ -194,7 +194,7 @@ export default defineComponent({
           // if (this.acceptedIps.includes(data.ip)) {
           this.currentIp = data.ip;
           this.mayGui = data.mayGui;
-          this.user = data.user;
+
           this.pendingData = data;
           this.acceptData(); // Tự động gọi hàm acceptData
           // } else {
