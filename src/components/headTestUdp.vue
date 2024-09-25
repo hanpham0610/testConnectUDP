@@ -71,9 +71,11 @@ export default {
           this.$router.push('/'); 
         } else {
           console.error('Lỗi khi đăng xuất');
+          this.$router.push("/");
         }
       } catch (error) {
         console.error('Lỗi khi gọi API đăng xuất:', error);
+        this.$router.push("/");
       }
     },
   
