@@ -56,19 +56,8 @@ export default {
   
     
     <style scoped>
-* {
-  margin: 0;
-  padding: 0;
-  font-family: Arial, Helvetica, sans-serif;
-}
 
-body {
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  min-height: 100vh;
-  background: #09161d;
-}
+
 
 .card {
   position: relative;

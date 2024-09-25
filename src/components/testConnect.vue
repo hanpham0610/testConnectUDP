@@ -177,7 +177,7 @@ export default defineComponent({
     this.fetchMessages();
     var localUser = localStorage.getItem("user");
     localUser = JSON.parse(localUser);
-    console.log("localUser", localUser.user);
+   
     this.user = localUser.user;
     this.$nextTick(() => {
       this.chart = this.$refs.lineChart.chart;
@@ -187,7 +187,7 @@ export default defineComponent({
         const data = JSON.parse(event.data);
         var localUser = localStorage.getItem("user");
         localUser = JSON.parse(localUser);
-
+        console.log("localUser", localUser);
         // Kiểm tra nếu người dùng từ localStorage khớp với người dùng trong dữ liệu nhận được
         if (data.mayGui === localUser.code) {
           // Kiểm tra nếu IP đã được chấp nhận

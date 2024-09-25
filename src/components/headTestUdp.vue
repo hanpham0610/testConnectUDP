@@ -2,7 +2,11 @@
   <header>
     <div class="nav-wrapper">
       <div class="logo-container">
-        <img class="logo" src="https://i.imgur.com/gea725J.png" alt="Logo" />
+        <img class="logo" src="../img/logoChelsea.png" alt="Logo" />
+        <span style="font-family: math;
+    font-weight: 600;
+    color: #07075b;">The blue</span>
+        <!-- <img class="logo" src="https://i.imgur.com/gea725J.png" alt="Logo" /> -->
       </div>
       <nav>
         <input class="hidden" type="checkbox" id="menuToggle" />
@@ -75,7 +79,7 @@ export default {
         }
       } catch (error) {
         console.error('Lỗi khi gọi API đăng xuất:', error);
-        this.$router.push("/");
+         this.$router.push("/");
       }
     },
   
