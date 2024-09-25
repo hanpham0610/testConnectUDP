@@ -159,38 +159,37 @@ export default defineComponent({
     };
   },
   mounted() {
-    this.fetchMessages();
-    this.$nextTick(() => {
-      this.chart = this.$refs.lineChart.chart;
+  this.fetchMessages();
+  this.$nextTick(() => {
+    this.chart = this.$refs.lineChart.chart;
 
-      const ws = new WebSocket("ws://" + domainIP + ":8081");
-      ws.onmessage = (event) => {
-        const data = JSON.parse(event.data);
+    const ws = new WebSocket("ws://" + domainIP + ":8081");
+    ws.onmessage = (event) => {
+      const data = JSON.parse(event.data);
 
-        var localUser = localStorage.getItem("user");
-        localUser = JSON.parse(localUser);
-        // Kiểm tra nếu người dùng từ localStorage khớp với người dùng trong dữ liệu nhận được
-        if (data.mayGui === localUser.code) {
-          if (!this.acceptedIps.includes(data.ip)) {
-            this.currentIp = data.ip;
-            this.mayGui = data.mayGui;
-            this.user = data.user;
-            this.pendingData = data;
-            this.showPopup = true;
-          } else {
-            this.messages.push(data);
-            this.$nextTick(() => {
-              if (this.chart) {
-                this.updateChart(data.message);
-              }
-            });
-          }
+      var localUser = localStorage.getItem("user");
+      localUser = JSON.parse(localUser);
+      
+      // Kiểm tra nếu người dùng từ localStorage khớp với người dùng trong dữ liệu nhận được
+      if (data.mayGui === localUser.code) {
+        // Kiểm tra nếu IP đã được chấp nhận
+        if (this.acceptedIps.includes(data.ip)) {
+          // Tự động xử lý dữ liệu mà không cần popup
+          this.pendingData = data;
+          this.acceptData(); // Tự động gọi hàm acceptData
         } else {
-          console.log("Người dùng không khớp, không hiển thị dữ liệu.");
+          this.currentIp = data.ip;
+          this.mayGui = data.mayGui;
+          this.user = data.user;
+          this.pendingData = data;
+          this.showPopup = true; // Hiển thị popup lần đầu
         }
-      };
-    });
-  },
+      } else {
+        console.log("Người dùng không khớp, không hiển thị dữ liệu.");
+      }
+    };
+  });
+},
 
   methods: {
     async fetchMessages() {
@@ -258,38 +257,37 @@ export default defineComponent({
     },
 
     acceptData() {
-      console.log("Dữ liệu chờ trước khi chấp nhận:", this.pendingData);
+    console.log("Dữ liệu chờ trước khi chấp nhận:", this.pendingData);
 
-      // Lấy thông tin user từ localStorage
-      var localUser = localStorage.getItem("user");
-      localUser = JSON.parse(localUser);
+    var localUser = localStorage.getItem("user");
+    localUser = JSON.parse(localUser);
 
-      // Kiểm tra nếu user trong pendingData khớp với user trong localStorage
-      if (this.pendingData.mayGui === localUser.code) {
-        fetch(this.ip + "/api/messages", {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify(this.pendingData),
+    // Kiểm tra nếu user trong pendingData khớp với user trong localStorage
+    if (this.pendingData.mayGui === localUser.code) {
+      fetch(this.ip + "/api/messages", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(this.pendingData),
+      })
+        .then((response) => {
+          if (response.ok) {
+            this.acceptedIps.push(this.currentIp); // Thêm IP vào danh sách đã chấp nhận
+            this.messages.push(this.pendingData); // Lưu thông điệp mới
+            this.updateChart(this.pendingData.message); // Cập nhật biểu đồ
+            this.clearPopup(); // Ẩn popup nếu có
+          } else {
+            console.error("Không thể lưu dữ liệu");
+          }
         })
-          .then((response) => {
-            if (response.ok) {
-              this.acceptedIps.push(this.currentIp); 
-              this.messages.push(this.pendingData);
-              this.updateChart(this.pendingData.message); 
-              this.clearPopup(); 
-            } else {
-              console.error("Không thể lưu dữ liệu");
-            }
-          })
-          .catch((error) => {
-            console.error("Lỗi khi lưu dữ liệu:", error);
-          });
-      } else {
-        console.log("Người dùng không khớp, không gọi API.");
-      }
-    },
+        .catch((error) => {
+          console.error("Lỗi khi lưu dữ liệu:", error);
+        });
+    } else {
+      console.log("Người dùng không khớp, không gọi API.");
+    }
+  },
     rejectData() {
       this.clearPopup();
     },
